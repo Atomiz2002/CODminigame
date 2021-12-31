@@ -1,0 +1,13 @@
+worlds: # gameworlds
+  world: # a gameworld's name
+    spawns: # gameworld-specific values
+      - 0,0,0
+    barriers:
+      - 0,0,0 0,0,0 0,0,0
+    shops:
+      - 2,2,2 250
+      - 2,2,3 500
+    # material* = add materials containing this word
+    # -material = remove all materials from the saved containing this word
+    gate: 4,4,4 7,7,7 FEnCE* STAIRS # gate: 4,4,4 7,7,7 fence* -gate
+    chest: 2,2,2
