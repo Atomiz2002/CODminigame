@@ -22,11 +22,11 @@ public class Main extends JavaPlugin {
     }
 
     @Override
-    public void onEnable() { // Adding some comments to help myself understand; Could be wrong about some
+    public void onEnable() { 
         main = this;
-        Helpers.loadConfig(); // load the GWs
+        Helpers.loadConfig(); 
 
-        economy = Bukkit.getServicesManager().load(Economy.class); // for the currency substraction n checks
+        economy = Bukkit.getServicesManager().load(Economy.class); 
 
         getCommand("codm").setExecutor(new Commands());
         getServer().getPluginManager().registerEvents(new Events(),this);
@@ -42,12 +42,3 @@ public class Main extends JavaPlugin {
         getLogger().info("Disabled");
     }
 }
-
-/*
-ok so the big ideas is.
-i have a custom object -> GameWorld
-a game world is equal to a map
-each map has its own gameworld representing it
-and each map has to be defined in the config
-so basically worlds: in the config contains the gameworlds
- */

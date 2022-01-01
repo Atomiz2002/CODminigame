@@ -9,7 +9,6 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Commands implements TabExecutor {
 
@@ -18,7 +17,6 @@ public class Commands implements TabExecutor {
     @Override
     public boolean onCommand(CommandSender s, Command cmd, String label, String[] args) {
         if (args.length == 0 || args[0].equalsIgnoreCase("help") || args[0].equalsIgnoreCase("h")) {
-            // i wanna die
             s.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "\n>> " + //
                     ChatColor.YELLOW + "" + ChatColor.BOLD + "CODM commands" + //
                     ChatColor.RED + ChatColor.BOLD + " <<" + ChatColor.AQUA + //
@@ -41,7 +39,6 @@ public class Commands implements TabExecutor {
 
         if (args[0].equalsIgnoreCase("reload") || args[0].equalsIgnoreCase("r")) {
             reload(s);
-            s.sendMessage("Loaded: " + String.join(", ", Gate.materials.stream().map(Material::name).collect(Collectors.toList())));
             return true;
         }
 
@@ -53,7 +50,7 @@ public class Commands implements TabExecutor {
         Player p = (Player) s;
 
         Location loc = p.getLocation().getBlock().getLocation();
-        GameWorld gameWorld = main.worlds.get(p.getWorld().getName());
+        GameWorld gameWorld = Main.worlds.get(p.getWorld().getName());
 
         switch (args[0].toLowerCase()) {
 
@@ -62,10 +59,10 @@ public class Commands implements TabExecutor {
 
                 if (!gameWorld.spawns.contains(loc)) {
                     gameWorld.spawns.add(loc.getBlock().getLocation());
-                    p.sendMessage(ChatColor.GOLD + "Added spawn location at: " + ChatColor.AQUA + Helpers.stringifyLocation(loc));
+                    p.sendMessage(ChatColor.GOLD + "Added spawn location at: " + ChatColor.AQUA + Helpers.stringifyLocation(loc, true));
                 } else {
                     gameWorld.spawns.remove(loc.getBlock().getLocation());
-                    p.sendMessage(ChatColor.GOLD + "Removed spawn location at: " + ChatColor.AQUA + Helpers.stringifyLocation(loc));
+                    p.sendMessage(ChatColor.GOLD + "Removed spawn location at: " + ChatColor.AQUA + Helpers.stringifyLocation(loc, true));
                 }
 
                 return true;
@@ -75,16 +72,15 @@ public class Commands implements TabExecutor {
 
                 return responseHandler(p, EditingType.BARRIER, "Click the 2 corners of the new barrier");
 
-            case "sh":
             case "shop":
             case "shops":
 
-                return responseHandler(p, EditingType.BARRIER, "Interact with any item frame to add it as a shop");
+                return responseHandler(p, EditingType.SHOPS, "Interact with any item frame to add it as a shop");
 
             case "g":
             case "gate":
 
-                return responseHandler(p, EditingType.BARRIER, "Click the 2 corners of the gate");
+                return responseHandler(p, EditingType.GATE, "Click the 2 corners of the gate");
 
             case "c":
             case "cancel":
@@ -102,36 +98,22 @@ public class Commands implements TabExecutor {
                 List<BlockState> original = new ArrayList<>();
                 long delay = args.length > 1 ? Long.parseLong(args[1]) : 5;
 
-                for (Location location : gameWorld.spawns) {
-                    BlockState state = location.getBlock().getState();
-                    original.add(state);
-                    state.getBlock().setType(Material.WOOL);
-                    state.getBlock().setData(DyeColor.LIME.getData());
-                }
+                for (Location location : gameWorld.spawns)
+                    show(original, location.getBlock().getState(), DyeColor.LIME);
 
                 for (Barriers barriers : gameWorld.barriers) {
-                    for (BlockState state : barriers.blocks) {
-                        original.add(state);
-                        state.getBlock().setType(Material.WOOL);
-                        state.getBlock().setData(DyeColor.PURPLE.getData());
-                    }
-
-                    original.add(barriers.repair);
-                    barriers.repair.getBlock().setType(Material.WOOL);
-                    barriers.repair.getBlock().setData(DyeColor.PINK.getData());
+                    for (BlockState state : barriers.blocks)
+                        show(original, state, DyeColor.PURPLE);
+                    show(original, barriers.repair, DyeColor.PINK);
                 }
 
                 for (Shop shop : gameWorld.shops) {
                     BlockState state = shop.location.getBlock().getState();
-                    original.add(state);
-                    state.getBlock().setType(Material.WOOL);
-                    state.getBlock().setData(DyeColor.BLUE.getData());
+                    show(original, state, DyeColor.BLUE);
                 }
 
                 for (BlockState state : gameWorld.gate.blocks) {
-                    original.add(state);
-                    state.getBlock().setType(Material.WOOL);
-                    state.getBlock().setData(DyeColor.YELLOW.getData());
+                    show(original, state, DyeColor.YELLOW);
                 }
 
                 Bukkit.getScheduler().runTaskLater(main, () -> {
@@ -151,20 +133,27 @@ public class Commands implements TabExecutor {
 
     private boolean responseHandler(Player p, EditingType type, String confirm) {
 
-        if (!main.editors.containsKey(p)) {
-            main.editors.put(p, new Editor(type));
+        if (!Main.editors.containsKey(p)) {
+            Main.editors.put(p, new Editor(type));
             p.sendMessage(ChatColor.GOLD + confirm);
 
-        } else if (main.editors.get(p).type == type) {
-            p.sendMessage(ChatColor.RED + "Cancelled editing the " + ChatColor.DARK_RED + main.editors.get(p).type.name().toLowerCase());
-            main.editors.remove(p);
+        } else if (Main.editors.get(p).type == type) {
+            p.sendMessage(ChatColor.RED + "Cancelled editing the " + ChatColor.DARK_RED + Main.editors.get(p).type.name().toLowerCase());
+            Main.editors.remove(p);
 
         } else {
-            p.sendMessage(ChatColor.RED + "Currently editing: " + ChatColor.DARK_RED + main.editors.get(p).type.name().toLowerCase() +
+            p.sendMessage(ChatColor.RED + "Currently editing: " + ChatColor.DARK_RED + Main.editors.get(p).type.name().toLowerCase() +
                     ChatColor.RED + " > " + ChatColor.GREEN + "/codm cancel");
         }
 
         return true;
+    }
+
+    private void show(List<BlockState> original, BlockState state, DyeColor yellow) {
+        original.add(state);
+        state.getBlock().setType(Material.WOOL);
+        //noinspection deprecation
+        state.getBlock().setData(yellow.getData());
     }
 
     private void reload(CommandSender s) {

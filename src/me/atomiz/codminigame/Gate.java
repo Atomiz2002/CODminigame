@@ -10,79 +10,96 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Gate {
-    static final List<Material> materials = new ArrayList<>();
+    public List<Material> materials = new ArrayList<>();
     public List<BlockState> blocks = new ArrayList<>();
 
-    public Gate(Location l1, Location l2) {
-        Helpers.getFill(l1, l2).forEach(blockState -> {
-            if (materials.contains(blockState.getType())) blocks.add(blockState);
-        });
-    }
-
-    public static Gate toGate(String worldName, String config) {
-        return toGate(Bukkit.getWorld(worldName), config);
+    public Gate() {
     }
 
     public static Gate toGate(World world, String config) {
-        List<String> values = new ArrayList<>(Arrays.asList(config.split(" ")));
-        Location loc1 = Helpers.toLocation(world, values.remove(0));
-        Location loc2 = Helpers.toLocation(world, values.remove(0));
-        materials.clear();
+        try {
+            Gate gate = new Gate();
 
-        List<Material> exclude = new ArrayList<>();
-        List<String> failed = new ArrayList<>();
+            List<String> values = new ArrayList<>(Arrays.asList(config.split(" ")));
+            Location loc1 = Helpers.toLocation(world, values.remove(0));
+            Location loc2 = Helpers.toLocation(world, values.remove(0));
 
-        for (String value : values) {
-            if (value.startsWith("-")) {
+            assert loc1 != null && loc2 != null;
+            gate.blocks = Helpers.getFill(loc1, loc2);
 
-                int size = exclude.size();
+            if (values.isEmpty())
+                return gate;
 
-                for (Material material : Material.values())
-                    if (material.name().contains(value.substring(1).toUpperCase())) {
-                        exclude.add(material);
-                    }
+            List<Material> exclude = new ArrayList<>();
+            List<Material> exact = new ArrayList<>();
+            List<String> failed = new ArrayList<>();
 
-                if (size == exclude.size()) failed.add(value);
+            for (String value : values) {
 
-                continue;
-            }
+                if (Material.matchMaterial(value) != null) {
+                    exact.add(Material.matchMaterial(value));
+                    continue;
+                }
 
-            if (value.endsWith("*")) {
+                if (value.startsWith("-")) {
+                    int size = exclude.size();
 
-                int size = materials.size();
+                    for (Material material : Material.values())
+                        if (material.name().contains(value.substring(1).toUpperCase()))
+                            exclude.add(material);
 
-                for (Material material : Material.values())
-                    if (material.name().contains(value.substring(0, value.length() - 1).toUpperCase())) {
-                        materials.add(material);
-                    }
+                    if (size == exclude.size())
+                        failed.add(value);
 
-                if (size == materials.size()) failed.add(value);
+                    continue;
+                }
 
-                continue;
-            }
+                if (value.endsWith("*")) {
+                    int size = gate.materials.size();
 
-            if (Material.matchMaterial(value) == null)
+                    for (Material material : Material.values())
+                        if (material.name().contains(value.substring(0, value.length() - 1).toUpperCase()))
+                            gate.materials.add(material);
+
+                    if (size == gate.materials.size())
+                        failed.add(value);
+
+                    continue;
+                }
+
                 failed.add(value);
-            else
-                materials.add(Material.matchMaterial(value));
+            }
+
+            gate.materials.removeIf(m -> {
+                for (Material e : exclude)
+                    if (m.name().contains(e.name()))
+                        return true;
+                return false;
+            });
+
+            gate.materials.addAll(exact);
+
+            if (!failed.isEmpty())
+                Main.main().getLogger().warning("- Invalid materials: " + String.join(" ", failed));
+
+            while (gate.materials.remove(null)) ;
+
+            gate.blocks.removeIf(blockState -> !gate.materials.contains(blockState.getType()) || blockState.getType() == Material.AIR);
+
+            if (gate.blocks.isEmpty()) {
+                Main.main().getLogger().warning("- No matching blocks for the gate");
+                return null;
+            }
+
+            return gate;
+        } catch (Exception ex) {
+            Main.main().getLogger().warning("- Invalid gate: " + config);
         }
 
-        List<Material> r = new ArrayList<>();
-
-        materials.removeIf(m -> {
-            for (Material e : exclude)
-                if (m.name().contains(e.name())) return true;
-            return false;
-        });
-
-        if (!failed.isEmpty()) Main.main().getLogger().warning("Invalid gate block types: " + String.join(", ", failed));
-
-        while (materials.remove(null)) ;
-
-        return new Gate(loc1, loc2);
+        return null;
     }
 
-    public static void setGate(Player p, Location loc) {
+    public static void selectGate(Player p, Location loc) {
         if (select(p, loc)) return;
 
         List<BlockState> states = Main.editors.get(p).states;
@@ -93,10 +110,14 @@ public class Gate {
         for (BlockState state : Main.editors.get(p).states)
             state.update(true);
 
-        Main.worlds.get(p.getWorld().getName()).gate = new Gate(loc1, loc2);
+        Main.worlds.get(p.getWorld().getName()).gate = toGate(loc.getWorld(),
+                Helpers.stringifyLocation(loc1, true) + " " + Helpers.stringifyLocation(loc2, true) + " " +
+                        Helpers.getFill(loc1, loc2).stream().map(blockState -> blockState.getType().name()).collect(Collectors.joining(" ")));
+
         Main.editors.remove(p);
 
-        p.sendMessage(ChatColor.GOLD + "Gate set at: " + ChatColor.AQUA + Helpers.stringifyLocation(loc1) + " " + Helpers.stringifyLocation(loc2));
+        p.sendMessage(ChatColor.GOLD + "Gate set at: " +
+                ChatColor.AQUA + Helpers.stringifyLocation(loc1, true) + " " + Helpers.stringifyLocation(loc2, true));
     }
 
     public static boolean select(Player p, Location loc) {
@@ -106,6 +127,7 @@ public class Gate {
 
         states.add(loc.getBlock().getState());
         loc.getBlock().setType(Material.WOOL);
+        //noinspection deprecation
         loc.getBlock().setData(DyeColor.YELLOW.getData());
 
         if (states.size() == 0) p.sendMessage(ChatColor.GOLD + "Select the first gate");

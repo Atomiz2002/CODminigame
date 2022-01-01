@@ -1,34 +1,46 @@
 package me.atomiz.codminigame;
 
 import org.bukkit.Location;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.ItemFrame;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 
 public class Shop {
     public Location location;
     public int price;
-    public ItemStack item; // could be a gun or a regular item
 
-    public Shop(Location location, int price, ItemStack item) {
+    public Shop(Location location, int price) {
         this.location = location;
         this.price = price;
-        this.item = item;
     }
 
-    // shop: 0,0,0 price
     public static Shop toShop(String worldName, String config) {
-        String coords = config.split(" ")[0];
-        int price = Integer.parseInt(config.split(" ")[1]);
+        try {
+            String coords = config.split(" ")[0];
+            int price = Integer.parseInt(config.split(" ")[1]);
 
-        Location location = Helpers.toLocation(worldName, coords);
-        ItemStack item = null;
+            Location location = Helpers.toLocation(worldName, coords);
+            boolean wasLoaded = location.getWorld().isChunkLoaded(location.getChunk());
+            location.getChunk().load();
 
-        return new Shop(location, price, item);
+            if (!location.getWorld().getNearbyEntities(location, 0, 0, 0).isEmpty()) {
+
+                if (!wasLoaded)
+                    location.getChunk().unload();
+
+                return new Shop(location, price);
+            } else {
+                Main.main().getLogger().warning("No shop found at " + coords);
+            }
+
+            if (!wasLoaded)
+                location.getChunk().unload();
+        } catch (Exception ex) {
+            Main.main().getLogger().warning("- Invalid shop: " + config);
+        }
+
+        return null;
     }
 
-    public static void newShop(Player p, Location loc) {
-
+    @Override
+    public String toString() {
+        return Helpers.stringifyLocation(location, false) + " " + price;
     }
 }

@@ -22,12 +22,18 @@ public class Barriers {
     }
 
     public static Barriers toBarrier(World world, String config) {
-        String[] values = config.split(" "); // so it splits the 3 x,y,z string to an array
-        Location loc1 = Helpers.toLocation(world, values[0]);
-        Location loc2 = Helpers.toLocation(world, values[1]);
-        Location repair = Helpers.toLocation(world, values[2]); // ok not rly but most stuff work w locations not xyz doubles
+        try {
+            String[] values = config.split(" ");
+            Location loc1 = Helpers.toLocation(world, values[0]);
+            Location loc2 = Helpers.toLocation(world, values[1]);
+            Location repair = Helpers.toLocation(world, values[2]);
 
-        return new Barriers(loc1, loc2, repair);
+            assert repair != null;
+            return new Barriers(loc1, loc2, repair);
+        } catch (Exception ex) {
+            Main.main().getLogger().warning("- Invalid barrier: " + config);
+        }
+        return null;
     }
 
     public static void addBarrier(Player p, Location l) {
@@ -46,7 +52,8 @@ public class Barriers {
         // TODO add to config
 
         Main.editors.remove(p);
-        p.sendMessage(ChatColor.GREEN + "New barrier added - " + Helpers.getFill(loc1, loc2).size() + ", " + Main.worlds.get(p.getWorld().getName()).barriers.size());
+        p.sendMessage(ChatColor.GREEN + "New barrier added - " +
+                Helpers.getFill(loc1, loc2).size() + ", " + Main.worlds.get(p.getWorld().getName()).barriers.size());
     }
 
     /**
@@ -59,6 +66,7 @@ public class Barriers {
 
         states.add(loc.getBlock().getState());
         loc.getBlock().setType(Material.WOOL);
+        //noinspection deprecation
         loc.getBlock().setData(DyeColor.PURPLE.getData());
 
         if (states.size() == 0) p.sendMessage(ChatColor.GOLD + "Select the first block");

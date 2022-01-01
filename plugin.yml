@@ -3,6 +3,7 @@ version: 1.0
 author: Atomiz
 main: me.atomiz.codminigame.Main
 depend: [ Essentials, Vault  ]
+load: POSTWORLD
 commands:
   codm:
       description: Main CODMinigame command
