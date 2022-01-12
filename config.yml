@@ -1,13 +1,21 @@
-worlds: # gameworlds
-  world: # a gameworld's name
-    spawns: # gameworld-specific values
-      - 0,0,0
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#  worlds:                                                                      #
+#    WorldName:                                                                 #
+#      spawns:                                                                  #
+#      - x,y,z                                                                  #
+#      barriers:                                                                #
+#      - x1,y1,z1 x2,y2,z2                                                      #
+#      shops: - requires exact item frame location (use the provided command)   #
+#      - x.xxxxx,y.yyyyyy,z.zzzzzz price                                        #
+#      gate: x1,y1,z1 x2,y2,z2 MATERIALS                                        #
+#      # material* = add materials containing this word                         #
+#      # -material = remove all materials from the saved containing this word   #
+#      chest: x,y,z                                                             #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+worlds:
+  world:
+    spawns:
     barriers:
-      - 0,0,0 0,0,0 0,0,0
     shops:
-      - 2,2,2 250
-      - 2,2,3 500
-    # material* = add materials containing this word
-    # -material = remove all materials from the saved containing this word
-    gate: 4,4,4 7,7,7 FEnCE* STAIRS # gate: 4,4,4 7,7,7 fence* -gate
-    chest: 2,2,2
+    gate:
+    chest:

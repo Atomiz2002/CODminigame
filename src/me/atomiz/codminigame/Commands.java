@@ -12,8 +12,6 @@ import java.util.List;
 
 public class Commands implements TabExecutor {
 
-    Main main = Main.main();
-
     @Override
     public boolean onCommand(CommandSender s, Command cmd, String label, String[] args) {
         if (args.length == 0 || args[0].equalsIgnoreCase("help") || args[0].equalsIgnoreCase("h")) {
@@ -65,6 +63,13 @@ public class Commands implements TabExecutor {
                     p.sendMessage(ChatColor.GOLD + "Removed spawn location at: " + ChatColor.AQUA + Helpers.stringifyLocation(loc, true));
                 }
 
+                List<String> spawns = new ArrayList<>();
+                for (Location spawn : gameWorld.spawns)
+                    spawns.add(Helpers.stringifyLocation(spawn,true));
+
+                Main.main().getConfig().set("worlds." + p.getWorld().getName() + ".spawns", spawns);
+                Main.main().saveConfig();
+
                 return true;
 
             case "b":
@@ -101,14 +106,15 @@ public class Commands implements TabExecutor {
                 for (Location location : gameWorld.spawns)
                     show(original, location.getBlock().getState(), DyeColor.LIME);
 
-                for (Barriers barriers : gameWorld.barriers) {
-                    for (BlockState state : barriers.blocks)
+                for (Barrier barrier : gameWorld.barriers) {
+                    for (BlockState state : barrier.blocks)
                         show(original, state, DyeColor.PURPLE);
-                    show(original, barriers.repair, DyeColor.PINK);
+
+                    show(original, barrier.getRepair().getBlock().getState(), DyeColor.PINK);
                 }
 
-                for (Shop shop : gameWorld.shops) {
-                    BlockState state = shop.location.getBlock().getState();
+                for (Location location : gameWorld.shops.keySet()) {
+                    BlockState state = location.getBlock().getState();
                     show(original, state, DyeColor.BLUE);
                 }
 
@@ -116,7 +122,7 @@ public class Commands implements TabExecutor {
                     show(original, state, DyeColor.YELLOW);
                 }
 
-                Bukkit.getScheduler().runTaskLater(main, () -> {
+                Bukkit.getScheduler().runTaskLater(Main.main(), () -> {
                     for (BlockState state : original)
                         state.update(true);
                 }, 20 * delay);
@@ -158,7 +164,7 @@ public class Commands implements TabExecutor {
 
     private void reload(CommandSender s) {
         for (Player p : Main.editors.keySet())
-            Barriers.deselect(p);
+            Barrier.deselect(p);
 
         Helpers.loadConfig();
         s.sendMessage(ChatColor.GREEN + "Reloaded config");

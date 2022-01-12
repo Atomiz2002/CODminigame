@@ -2,7 +2,6 @@ package me.atomiz.codminigame;
 
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -13,7 +12,6 @@ public class Main extends JavaPlugin {
 
     static Economy economy;
     private static Main main;
-    static FileConfiguration config;
     static final Map<String, GameWorld> worlds = new HashMap<>();
     static final Map<Player, Editor> editors = new HashMap<>();
 
@@ -24,7 +22,7 @@ public class Main extends JavaPlugin {
     @Override
     public void onEnable() { 
         main = this;
-        Helpers.loadConfig(); 
+        Helpers.loadConfig();
 
         economy = Bukkit.getServicesManager().load(Economy.class); 
 
@@ -37,7 +35,7 @@ public class Main extends JavaPlugin {
     @Override
     public void onDisable() {
         for (Player p : editors.keySet())
-            Barriers.deselect(p);
+            Barrier.deselect(p);
 
         getLogger().info("Disabled");
     }

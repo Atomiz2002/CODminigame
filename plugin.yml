@@ -1,14 +1,14 @@
 name: CODMinigame
 version: 1.0
-author: Atomiz
+authors: [ Atomiz, Fen ]
 main: me.atomiz.codminigame.Main
-depend: [ Essentials, Vault  ]
+depend: [ Essentials, Vault ]
 load: POSTWORLD
 commands:
   codm:
-      description: Main CODMinigame command
-      aliases: codm
-      permission: codm
+    description: Main CODMinigame command
+    aliases: codm
+    permission: codm
 permissions:
   codm:
     description: Access to all CODMinigame commands

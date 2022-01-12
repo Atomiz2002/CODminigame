@@ -35,7 +35,9 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../../- Plugins/Vault.jar!/" />
         </CLASSES>
-        <JAVADOC />
+        <JAVADOC>
+          <root url="http://milkbowl.github.io/VaultAPI/" />
+        </JAVADOC>
         <SOURCES />
       </library>
     </orderEntry>

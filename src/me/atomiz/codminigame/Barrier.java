@@ -8,20 +8,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class Barriers {
+public class Barrier {
     public List<BlockState> blocks = new ArrayList<>();
-    public BlockState repair;
+    public Location[] values;
 
-    public Barriers(Location l1, Location l2, Location repair) {
-        blocks.addAll(Helpers.getFill(l1, l2));
-        this.repair = repair.getBlock().getState();
+    public Barrier(Location l1, Location l2, Location repair) {
+        values = new Location[]{l1, l2, repair};
+        blocks.addAll(Helpers.getFill(l1, l2, null));
     }
 
-    public static Barriers toBarrier(String worldName, String config) {
-        return toBarrier(Bukkit.getWorld(worldName), config);
-    }
-
-    public static Barriers toBarrier(World world, String config) {
+    public static Barrier toBarrier(World world, String config) {
         try {
             String[] values = config.split(" ");
             Location loc1 = Helpers.toLocation(world, values[0]);
@@ -29,7 +25,7 @@ public class Barriers {
             Location repair = Helpers.toLocation(world, values[2]);
 
             assert repair != null;
-            return new Barriers(loc1, loc2, repair);
+            return new Barrier(loc1, loc2, repair);
         } catch (Exception ex) {
             Main.main().getLogger().warning("- Invalid barrier: " + config);
         }
@@ -48,12 +44,19 @@ public class Barriers {
         for (BlockState state : Main.editors.get(p).states)
             state.update(true);
 
-        Main.worlds.get(p.getWorld().getName()).barriers.add(new Barriers(loc1, loc2, repair));
-        // TODO add to config
+        Barrier barrier = new Barrier(loc1, loc2, repair);
+
+        Main.worlds.get(p.getWorld().getName()).barriers.add(barrier);
+
+        List<String> locs = Main.main().getConfig().getStringList("worlds." + p.getWorld().getName() + ".barriers");
+        locs.add(barrier.toString());
+
+        Main.main().getConfig().set("worlds." + p.getWorld().getName() + ".barriers", locs);
+        Main.main().saveConfig();
 
         Main.editors.remove(p);
         p.sendMessage(ChatColor.GREEN + "New barrier added - " +
-                Helpers.getFill(loc1, loc2).size() + ", " + Main.worlds.get(p.getWorld().getName()).barriers.size());
+                Helpers.getFill(loc1, loc2, null).size() + ", " + Main.worlds.get(p.getWorld().getName()).barriers.size());
     }
 
     /**
@@ -86,11 +89,22 @@ public class Barriers {
         Main.editors.remove(p);
     }
 
+    public Location getRepair() {
+        return values[2];
+    }
+
     public void breakRandom() {
         if (blocks.isEmpty()) return;
 
         int r = new Random().nextInt(blocks.size());
         blocks.get(r).getBlock().breakNaturally();
         // TODO
+    }
+
+    @Override
+    public String toString() {
+        return Helpers.stringifyLocation(values[0], true) + " " +
+                Helpers.stringifyLocation(values[1], true) + " " +
+                Helpers.stringifyLocation(values[2], true);
     }
 }
